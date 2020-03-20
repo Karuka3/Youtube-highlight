@@ -133,7 +133,6 @@ class YoutubeChat:
             return 0
         t = list(map(int, input_t.split(':')))
         if len(t) == 2:
-            t = 60 * t[0] + t[1]
+            return 60 * t[0] + t[1]
         else:
-            t = 60 * 60 * t[0] + 60 * t[1] + t[2]
-        return t
+            return 60 * 60 * t[0] + 60 * t[1] + t[2]
