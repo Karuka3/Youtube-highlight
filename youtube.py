@@ -1,13 +1,13 @@
-import os
 import sys
-import csv
 import requests
+import itertools
+import pandas as pd
 from bs4 import BeautifulSoup
 
 
 class YoutubeChat:
-    def __init__(self):
-        self.dics = None
+    def __init__(self, url=''):
+        self.chat_data = self.get_chat_data(url)
 
     def get_html(self, url):
         try:
@@ -35,49 +35,41 @@ class YoutubeChat:
             sys.exit()
         return dics
 
-    def get_continueURL(self):
-        try:
-            continue_url = self.dics['continuationContents']['liveChatContinuation'][
-                'continuations'][0]['liveChatReplayContinuationData']['continuation']
-        except Exception:
-            break
-        return continue_url
-
-    def get_chat(self):
+    def get_chat(self, dics):
         chat = []
-        for samp in self.dics['continuationContents']['liveChatContinuation']['actions'][1:]:
+        for sample in dics['continuationContents']['liveChatContinuation']['actions'][1:]:
             d = {}
             try:
-                samp = samp['replayChatItemAction']['actions'][0]['addChatItemAction']['item']
-                chat_type = list(samp.keys())[0]
+                sample = sample['replayChatItemAction']['actions'][0]['addChatItemAction']['item']
+                chat_type = list(sample.keys())[0]
                 if 'liveChatTextMessageRenderer' == chat_type:
                     # 通常チャットの処理
-                    if 'simpleText' in samp['liveChatTextMessageRenderer']['message']:
-                        d['message'] = samp['liveChatTextMessageRenderer']['message']['simpleText']
+                    if 'simpleText' in sample['liveChatTextMessageRenderer']['message']:
+                        d['message'] = sample['liveChatTextMessageRenderer']['message']['simpleText']
                     else:
                         d['message'] = ''
-                        for elem in samp['liveChatTextMessageRenderer']['message']['runs']:
+                        for elem in sample['liveChatTextMessageRenderer']['message']['runs']:
                             if 'text' in elem:
                                 d['message'] += elem['text']
                             else:
                                 d['message'] += elem['emoji']['shortcuts'][0]
-                    t = samp['liveChatTextMessageRenderer']['timestampText']['simpleText']
+                    t = sample['liveChatTextMessageRenderer']['timestampText']['simpleText']
                     d['timestamp'] = self.convert_time(t)
-                    d['id'] = samp['liveChatTextMessageRenderer']['authorExternalChannelId']
+                    d['id'] = sample['liveChatTextMessageRenderer']['authorExternalChannelId']
                 elif 'liveChatPaidMessageRenderer' == chat_type:
                     # スパチャの処理
-                    if 'simpleText' in samp['liveChatPaidMessageRenderer']['message']:
-                        d['message'] = samp['liveChatPaidMessageRenderer']['message']['simpleText']
+                    if 'simpleText' in sample['liveChatPaidMessageRenderer']['message']:
+                        d['message'] = sample['liveChatPaidMessageRenderer']['message']['simpleText']
                     else:
                         d['message'] = ''
-                        for elem in samp['liveChatPaidMessageRenderer']['message']['runs']:
+                        for elem in sample['liveChatPaidMessageRenderer']['message']['runs']:
                             if 'text' in elem:
                                 d['message'] += elem['text']
                             else:
                                 d['message'] += elem['emoji']['shortcuts'][0]
-                    t = samp['liveChatPaidMessageRenderer']['timestampText']['simpleText']
+                    t = sample['liveChatPaidMessageRenderer']['timestampText']['simpleText']
                     d['timestamp'] = self.convert_time(t)
-                    d['id'] = samp['liveChatPaidMessageRenderer']['authorExternalChannelId']
+                    d['id'] = sample['liveChatPaidMessageRenderer']['authorExternalChannelId']
                 elif 'liveChatPaidStickerRenderer' == chat_type:
                     # コメントなしスパチャ
                     continue
@@ -90,12 +82,12 @@ class YoutubeChat:
                     print('知らないチャットの種類' + chat_type)
                     continue
             except Exception:
-                # print(Exception.args)
                 continue
             chat.append(d)
         return chat
 
     def get_chat_data(self, url):
+        chat_data = []
         dict_str = ''
         next_url = ''
         session = requests.Session()
@@ -120,11 +112,21 @@ class YoutubeChat:
             dict_str = self.js2py(dict_str)
             dict_str = dict_str.rstrip('  \n;')
 
-            self.dics = self.convert2dict(dict_str, soup)
-            continue_url = self.get_continueURL()
-            next_url = 'https://www.youtube.com/live_chat_replay?continuation=' + continue_url
+            dics = self.convert2dict(dict_str, soup)
 
-        return self.get_chat()
+            try:
+                continue_url = dics['continuationContents']['liveChatContinuation'][
+                    'continuations'][0]['liveChatReplayContinuationData']['continuation']
+            except Exception:
+                break
+            next_url = 'https://www.youtube.com/live_chat_replay?continuation=' + continue_url
+            chat_data.append(self.get_chat(dics))
+        chat_data = list(itertools.chain.from_iterable(chat_data))
+        return chat_data
+
+    def save_data(self):
+        df = pd.json_normalize(self.chat_data)
+        df.to_csv('youtube_chat_data.csv')
 
     def convert_time(self, input_t):
         if input_t[0] == '-':
