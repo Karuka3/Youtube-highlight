@@ -1,5 +1,10 @@
+from youtube import YoutubeChat
+
+
 def main():
-    pass
+    url = input()
+    youchat = YoutubeChat(url)
+    youchat.save_data()
 
 
 if __name__ == "__main__":
