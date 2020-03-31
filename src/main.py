@@ -1,4 +1,4 @@
-from youtube import YoutubeChat
+from chat import YoutubeChat
 
 
 def main():

@@ -6,8 +6,9 @@ from bs4 import BeautifulSoup
 
 
 class YoutubeChat:
-    def __init__(self, url=''):
-        self.chat_data = self.get_chat_data(url)
+    def __init__(self, url):
+        self.url = url
+        self.chat_data = self.get_chat_data(self.url)
 
     def get_html(self, url):
         try:
@@ -126,7 +127,7 @@ class YoutubeChat:
 
     def save_data(self):
         df = pd.json_normalize(self.chat_data)
-        df.to_csv('youtube_chat_data.csv')
+        df.to_csv('data\\youtube_chat_data.csv')
 
     def convert_time(self, input_t):
         if input_t[0] == '-':
