@@ -52,38 +52,32 @@ class YoutubeChannel:
                             search_result["id"]["videoId"]
                             ]
                     infos.append(info)
-
             if "nextPageToken" in search_response.keys():
                 PAGE_TOKEN = search_response["nextPageToken"]
             else:
                 print("OK")
                 break
-
         print("Total Video: {}".format(
             search_response["pageInfo"]["totalResults"]))
         videos = pd.DataFrame(
             infos, columns=["channelId", "title", "videoId"])
         return videos
 
-    def get_video_info(self, videoIds: list):
-        VIDEO_IDs = videoIds
+    def get_video_info(self, videoId):
         infos = []
         video_response = self.youtube.videos().list(
-            part="id,snippet,contentDetails,fileDetails,liveStreamingDetails",
-            id=VIDEO_IDs
+            part="id, snippet, contentDetails",
+            id=videoId
         ).execute()
 
         for video_result in video_response.get("items", []):
-            if video_result["fileDetails"]["fileType"] == "archive":
-                info = [video_result["Id"],
-                        video_result["snippet"]["title"],
-                        video_result["contentDetails"]["duration"],
-                        video_result["snippet"]["publishedAt"],
-                        video_result["liveStreamingDetails"]["concurrentViewers"],
-                        video_result["liveStreamingDetails"]["activeLiveChatId"],
-                        ]
-                infos.append(info)
+            info = [video_result["id"],
+                    video_result["snippet"]["title"],
+                    video_result["contentDetails"]["duration"],
+                    video_result["snippet"]["publishedAt"],
+                    ]
+            infos.append(info)
 
         video_info = pd.DataFrame(
-            infos, columns=["videoId", "title", "duration", "publishedAt", "concurrentViewers", "activeLiveChatId"])
+            infos, columns=["videoId", "title", "duration", "publishedAt"])
         return video_info
