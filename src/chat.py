@@ -46,6 +46,7 @@ class YoutubeLiveChat:
                     break
                 next_url = continue_url
             except Exception:
+                print("Finish")
                 break
         livechat_data = list(itertools.chain.from_iterable(livechat_data))
         livechat_data = pd.json_normalize(livechat_data)
