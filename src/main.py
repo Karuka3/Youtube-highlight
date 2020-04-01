@@ -1,10 +1,10 @@
-from chat import YoutubeChat
+from chat import YoutubeLiveChat
 
 
 def main():
-    url = input()
-    youchat = YoutubeChat(url)
-    youchat.save_data()
+    youchat = YoutubeLiveChat()
+    df = youchat.get_livechat("xfs3P8mIAIw")
+    df.to_csv("data\\test.csv", index=False)
 
 
 if __name__ == "__main__":
