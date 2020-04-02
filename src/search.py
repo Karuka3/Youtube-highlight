@@ -1,5 +1,6 @@
 from chat import YoutubeLiveChat
 from channel import YoutubeChannel
+from apiclient.errors import HttpError
 import itertools
 import pandas as pd
 import os
@@ -7,27 +8,28 @@ import os
 
 def search_channels():
     youchannel = YoutubeChannel()
-    channels = youchannel.get_channelID(query="ホロライブ", max_results=40)
-    # dataの削除コード追加予定
-    # drop_index = [channels.index[channels["channelTitle"] == x]
-    #              for x in channels["channelTitle"] if "Ch" not in x]
-    #drop_index = list(itertools.chain.from_iterable(drop_index))
-    #channels = channels.drop(drop_index).reset_index(drop=True)
-
-    channels = channesl.query("channelTitle.str.contains("Ch")", engine="python").reset_index(drop=True)
-    channels.to_csv("data\\channel_infos.csv")
+    try:
+        channels = youchannel.get_channelID(query="ホロライブ", max_results=40)
+        channels = channels.query(
+            'channelTitle.str.contains("Ch")', engine="python").reset_index(drop=True)
+        channels.to_csv("data\\channel_infos.csv")
+    except HttpError as e:
+        print("An HTTP error {} occurred".format(e.resp.status))
 
 
 def search_videos():
     youchannel = YoutubeChannel()
-    channel_info = pd.read_csv("data\\channel_infos.csv")
-    for id, title in zip(channel_info["channelId"], channel_info["channelTitle"]):
-        videos = youchannel.get_videos(id)
-        videos = videos.sort_values(
-            "date", ascending=False).reset_index(drop=True)
-        filename = "data\\video_info\\videos_{}.csv".format(title)
-        videos.to_csv(filename)
-    print("Finish")
+    try:
+        channel_info = pd.read_csv("data\\channel_infos.csv")
+        for id, title in zip(channel_info["channelId"], channel_info["channelTitle"]):
+            videos = youchannel.get_videos(id)
+            videos = videos.sort_values(
+                "date", ascending=False).reset_index(drop=True)
+            filename = "data\\video_info\\videos_{}.csv".format(title)
+            videos.to_csv(filename)
+        print("Finish")
+    except HttpError as e:
+        print("An HTTP error {} occurred".format(e.resp.status))
 
 
 def search_livechat():
@@ -49,5 +51,5 @@ def search_livechat():
 
 if __name__ == "__main__":
     search_channels()
-    search_videos()
-    search_livechat()
+    # search_videos()
+    # search_livechat()
