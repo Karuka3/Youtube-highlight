@@ -1,5 +1,6 @@
 import config
 import pandas as pd
+import itertools
 from apiclient.discovery import build
 
 
@@ -20,8 +21,11 @@ class YoutubeChannel:
 
         for search_result in search_response.get("items", []):
             if search_result["id"]["kind"] == "youtube#channel":
-                channels.append("%s (%s)" % (search_result["snippet"]["title"],
-                                             search_result["id"]["channelId"]))
+                info = [search_result["snippet"]["title"],
+                        search_result["id"]["channelId"]]
+                channels.append(info)
+        channels = pd.DataFrame(
+            channels, columns=["channelTitle", "channelId"])
         return channels
 
     def get_videos(self, channel_id):
@@ -49,7 +53,8 @@ class YoutubeChannel:
                 if search_result["id"]["kind"] == "youtube#video":
                     info = [search_result["snippet"]["channelId"],
                             search_result["snippet"]["title"],
-                            search_result["id"]["videoId"]
+                            search_result["id"]["videoId"],
+                            search_result["snippet"]["publishedAt"]
                             ]
                     infos.append(info)
             if "nextPageToken" in search_response.keys():
@@ -60,7 +65,7 @@ class YoutubeChannel:
         print("Total Video: {}".format(
             search_response["pageInfo"]["totalResults"]))
         videos = pd.DataFrame(
-            infos, columns=["channelId", "title", "videoId"])
+            infos, columns=["channelId", "title", "videoId", "date"])
         return videos
 
     def get_video_info(self, videoId):
