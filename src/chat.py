@@ -24,30 +24,25 @@ class YoutubeLiveChat:
                 next_url = iframe["src"]
                 break
         while True:
+            html = session.get(next_url, headers=headers)
+            soup = BeautifulSoup(html.text, 'lxml')
+            for scrp in soup.find_all("script"):
+                if "window[\"ytInitialData\"]" in scrp.text:
+                    dict_str = scrp.text.split(" = ", 1)[1]
+
+            dict_str = dict_str.replace("false", "False")
+            dict_str = dict_str.replace("true", "True")
+            dict_str = dict_str.rstrip("  \n;")
+            dics = eval(dict_str)
             try:
-                html = session.get(next_url, headers=headers)
-                soup = BeautifulSoup(html.text, 'lxml')
-                for scrp in soup.find_all("script"):
-                    if "window[\"ytInitialData\"]" in scrp.text:
-                        dict_str = scrp.text.split(" = ")[1]
-                        break
-
-                dict_str = dict_str.replace("false", "False")
-                dict_str = dict_str.replace("true", "True")
-                dict_str = dict_str.rstrip("; \n")
-                dics = eval(dict_str)
-
-                livechat_data.append(self.get_data(dics))
-
                 continuation = dics["continuationContents"]["liveChatContinuation"][
                     "continuations"][0]["liveChatReplayContinuationData"]["continuation"]
                 continue_url = "https://www.youtube.com/live_chat_replay?continuation=" + continuation
-                if continue_url == next_url:
-                    break
                 next_url = continue_url
             except Exception:
                 print("Finish")
                 break
+            livechat_data.append(self.get_data(dics))
         livechat_data = list(itertools.chain.from_iterable(livechat_data))
         livechat_data = pd.json_normalize(livechat_data)
         return livechat_data
