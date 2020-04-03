@@ -12,7 +12,7 @@ def search_channels():
         channels = youchannel.get_channelID(query="ホロライブ", max_results=40)
         channels = channels.query(
             'channelTitle.str.contains("Ch")', engine="python").reset_index(drop=True)
-        channels.to_csv("data\\channel_infos.csv")
+        channels.to_csv("data\\channel_infos.csv", index=False)
     except HttpError as e:
         print("An HTTP error {} occurred".format(e.resp.status))
 
@@ -26,7 +26,7 @@ def search_videos():
             videos = videos.sort_values(
                 "date", ascending=False).reset_index(drop=True)
             filename = "data\\video_info\\videos_{}.csv".format(title)
-            videos.to_csv(filename)
+            videos.to_csv(filename, index=False)
         print("Finish")
     except HttpError as e:
         print("An HTTP error {} occurred".format(e.resp.status))
@@ -46,7 +46,7 @@ def search_livechat():
             dir_path = "data\\livechats\\{}".format(name.rsplit(".", 1)[0])
             if os.path.exists(dir_path) == False:
                 os.mkdir(dir_path)
-            livechat.to_csv(dir_path + "\\{}.csv".format(videoId))
+            livechat.to_csv(dir_path + "\\{}.csv".format(videoId), index=False)
 
 
 if __name__ == "__main__":
