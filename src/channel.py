@@ -29,36 +29,33 @@ class YoutubeChannel:
         return channels
 
     def get_videos(self, channel_id, pageToken=""):
-        CHANNEL_ID = channel_id
         infos = []
+        while True:
+            search_response = self.youtube.search().list(
+                part="id,snippet",
+                channelId=channel_id,
+                maxResults=50,
+                order="date",
+                pageToken=pageToken
+            ).execute()
 
-        search_response = self.youtube.search().list(
-            part="id,snippet",
-            channelId=CHANNEL_ID,
-            maxResults=50,
-            order="date",
-            pageToken=pageToken
-        ).execute()
-
-        for search_result in search_response.get("items", []):
-            if search_result["id"]["kind"] == "youtube#video":
-                info = [search_result["snippet"]["channelId"],
-                        search_result["snippet"]["title"],
-                        search_result["id"]["videoId"],
-                        search_result["snippet"]["publishedAt"]
-                        ]
-                infos.append(info)
-        try:
-            pageToken = search_response["nextPageToken"]
-            get_videos(channel_id, pageToken)
-        except:
-            print("{}".format(search_result["snnipet"]["title"]))
-            print("Total Videos: {}".format(
-                search_response["pageInfo"]["totalResults"]))
-            videos = pd.DataFrame(
-                infos, columns=["channelId", "title", "videoId", "date"])
-            print("Get Videos: {}".format(len(videos["videoId"])))
-            return videos
+            for search_result in search_response.get("items", []):
+                if search_result["id"]["kind"] == "youtube#video":
+                    info = [search_result["snippet"]["channelId"],
+                            search_result["snippet"]["title"],
+                            search_result["id"]["videoId"],
+                            search_result["snippet"]["publishedAt"]
+                            ]
+                    infos.append(info)
+            if "nextPageToken" in search_response.keys():
+                PAGE_TOKEN = search_response["nextPageToken"]
+            else:
+                break
+        print("Total Video: {}".format(
+            search_response["pageInfo"]["totalResults"]))
+        videos = pd.DataFrame(
+            infos, columns=["channelId", "title", "videoId", "date"])
+        return videos
 
     def get_video_info(self, videoId):
         infos = []

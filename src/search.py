@@ -38,18 +38,18 @@ def search_livechat():
     files = os.listdir(path)
     filenames = [f for f in files if os.path.isfile(os.path.join(path, f))]
     for name in filenames:
-        path = "data\\data_info\\{}".format(name)
+        path = "data\\video_info\\{}".format(name)
         videos = pd.read_csv(path)
         videoIds = videos["videoId"]
         for videoId in videoIds:
             livechat = youchat.get_livechat(videoId)
-            dir_path = "data\\livechats\\{}".format(name.split(".")[0])
+            dir_path = "data\\livechats\\{}".format(name.rsplit(".", 1)[0])
             if os.path.exists(dir_path) == False:
                 os.mkdir(dir_path)
-            livechat.to_csv(dir_path+"{}.csv".format(videoId))
+            livechat.to_csv(dir_path + "\\{}.csv".format(videoId))
 
 
 if __name__ == "__main__":
-    search_channels()
+    # search_channels()
     # search_videos()
     # search_livechat()
