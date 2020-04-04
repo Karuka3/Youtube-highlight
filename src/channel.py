@@ -48,7 +48,7 @@ class YoutubeChannel:
                             ]
                     infos.append(info)
             if "nextPageToken" in search_response.keys():
-                PAGE_TOKEN = search_response["nextPageToken"]
+                pageToken = search_response["nextPageToken"]
             else:
                 break
         print("Total Video: {}".format(
