@@ -1,4 +1,3 @@
-import sys
 import requests
 import itertools
 import pandas as pd
